@@ -122,8 +122,7 @@ SELECT
     groupArray(fe.txn_id) AS txn_ids
 FROM enquiries e
 LEFT JOIN FirstEnquiries fe ON e.enquiry_id = fe.enquiry_id
-GROUP BY e.enquiry_id, e.date, e.user_id
-ORDER BY e.enquiry_id;
+GROUP BY e.enquiry_id, e.date, e.user_id;
 
 
 We join the filtered list of linked transaction IDs back with the original `enquiries` table.  
