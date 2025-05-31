@@ -326,26 +326,26 @@ WITH FirstEnquiryPerTxn AS (
         e.enquiry_id,
         e.date AS enquiry_date,
         t.user_id,
-        row_number() OVER (PARTITION BY t.txn_id ORDER BY e.date ASC) AS rn
+        row_number() OVER (PARTITION BY t.txn_id ORDER BY e.date ASC) AS rn  -- rank enquiries per txn by date
     FROM txns t
     INNER JOIN enquiries e
         ON t.user_id = e.user_id
-        AND e.date BETWEEN t.date - INTERVAL 30 DAY AND t.date
+        AND e.date BETWEEN t.date - INTERVAL 30 DAY AND t.date               -- enquiry should be within 30 days before txn
 ),
 
 FirstEnquiries AS (
     SELECT txn_id, enquiry_id
     FROM FirstEnquiryPerTxn
-    WHERE rn = 1
+    WHERE rn = 1                               -- only earliest enquiry per txn
 )
 
 SELECT
     e.enquiry_id,
     e.date,
     e.user_id,
-    groupArray(fe.txn_id) AS txn_ids
+    groupArray(fe.txn_id) AS txn_ids          -- collect all txn_ids linked to this enquiry
 FROM enquiries e
-LEFT JOIN FirstEnquiries fe ON e.enquiry_id = fe.enquiry_id
+LEFT JOIN FirstEnquiries fe ON e.enquiry_id = fe.enquiry_id     -- keep all enquiries, even those not converted
 GROUP BY e.enquiry_id, e.date, e.user_id
 ORDER BY e.enquiry_id;
 
