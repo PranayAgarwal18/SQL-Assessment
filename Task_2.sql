@@ -346,6 +346,5 @@ SELECT
     groupArray(fe.txn_id) AS txn_ids          -- collect all txn_ids linked to this enquiry
 FROM enquiries e
 LEFT JOIN FirstEnquiries fe ON e.enquiry_id = fe.enquiry_id     -- keep all enquiries, even those not converted
-GROUP BY e.enquiry_id, e.date, e.user_id
-ORDER BY e.enquiry_id;
+GROUP BY e.enquiry_id, e.date, e.user_id;
 
