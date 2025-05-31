@@ -8,7 +8,7 @@ Generate a summary table showing, for each user and each date, how many enquirie
 
 ### Approach
 
-**Step - 1** Count the number of enquiries for each `user_id` on each `date` from the `enquiries` table.
+**Step -1** Count the number of enquiries for each `user_id` on each `date` from the `enquiries` table.
 
 SELECT
         user_id,
@@ -39,7 +39,7 @@ Since this only deals with transactions, we set `count_enq` to 0 to align the ou
 We use `UNION ALL` to combine the results of the enquiry and transaction count queries, keeping all records without removing duplicates.
 This creates a single dataset with both enquiry and transaction counts for each user per date.
 
-**Step 3** 
+**Step -3** 
 
 SELECT
     user_id,
