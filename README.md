@@ -50,8 +50,7 @@ FROM (
          **Step 1 - Query
          UNION ALL
          Step 2 - Query**
-    ) As enquiry_txn
-    
+    ) As enquiry_txn  
 GROUP BY user_id, date
 ORDER BY user_id, date;
 
