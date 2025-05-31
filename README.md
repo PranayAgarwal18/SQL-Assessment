@@ -126,8 +126,12 @@ LEFT JOIN FirstEnquiries fe ON e.enquiry_id = fe.enquiry_id
 GROUP BY e.enquiry_id, e.date, e.user_id
 ORDER BY e.enquiry_id;
 
+
 We join the filtered list of linked transaction IDs back with the original `enquiries` table.  
 For each enquiry, we collect all `txn_id`s where it was the first valid enquiry within 30 days before the transaction — using `groupArray()`.
+
+We use a `LEFT JOIN` to ensure that all enquiries appear in the final output, even if they were not linked to any transaction (i.e., not converted).
+
 
 **Final Output**
 
