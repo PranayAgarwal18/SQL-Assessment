@@ -52,11 +52,10 @@ SELECT
     sum(count_txns) AS count_txns
 FROM (
          **Step 1 - Query
-         UNION ALL
+         "UNION ALL"
          Step 2 - Query**
     ) As enquiry_txn  
-GROUP BY user_id, date
-ORDER BY user_id, date;
+GROUP BY user_id, date;
 
 The outer query groups the combined data again by `user_id` and `date` to sum up the enquiry and transaction counts, producing the final result with total counts per user per day.
 
