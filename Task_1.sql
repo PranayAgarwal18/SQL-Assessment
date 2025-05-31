@@ -332,8 +332,8 @@ FROM
     SELECT
         user_id,
         date,
-        count() AS count_enq,
-        0 AS count_txns
+        count() AS count_enq,   -- Count of enquiries
+        0 AS count_txns         -- No transactions here
     FROM enquiries
     GROUP BY user_id, date
 
