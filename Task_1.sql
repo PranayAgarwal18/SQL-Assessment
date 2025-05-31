@@ -347,5 +347,4 @@ FROM
     FROM txns
     GROUP BY user_id, date
 ) AS combined
-GROUP BY user_id, date
-ORDER BY user_id, date;
+GROUP BY user_id, date;
