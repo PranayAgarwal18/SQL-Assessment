@@ -67,9 +67,11 @@ The outer query groups the combined data again by `user_id` and `date` to sum up
 
 ### Objective
 
-Identify which enquiries resulted in transactions. An enquiry is considered converted if the user completes a transaction within 30 days of the enquiry. Each transaction can be linked to at most one enquiry (the earliest one within the last 30 days), but a single enquiry can be linked to multiple transactions.
-
----
+Users express interest in a product by filling out an enquiry form.
+An enquiry is considered converted if the user completes a transaction within 30 days of submitting the enquiry.
+For each transaction, only the first enquiry made within the preceding 30 days is counted as converted.
+Each transaction can be linked to atmost one enquiry.
+However, a single enquiry may be linked to multiple transactions.
 
 ### Rules
 
@@ -78,33 +80,59 @@ Identify which enquiries resulted in transactions. An enquiry is considered conv
 3. A transaction can be linked to only **one enquiry**.
 4. But one enquiry can be linked to **multiple transactions**.
 
----
-
 ### Approach
 
-1. Join the `txns` and `enquiries` tables **on user_id** and **date range condition**:
-   - Enquiry date must be within 30 days **before** the transaction date.
-2. Use `ROW_NUMBER()` partitioned by transaction to identify the **first valid enquiry**.
-3. Filter to keep only rows where `row_number = 1`.
-4. Group the valid (txn-enquiry) mappings by `enquiry_id` to collect all linked `txn_id`s into an array.
-5. Left join this mapping back to the `enquiries` table to get all enquiries and their linked transactions (if any).
+**Step 1**
 
----
+Match each transaction with enquiries in the last 30 days
 
-### Output Schema
+WITH FirstEnquiryPerTxn AS (
+    SELECT
+        t.txn_id,
+        t.date AS txn_date,
+        e.enquiry_id,
+        e.date AS enquiry_date,
+        t.user_id,
+        row_number() OVER (PARTITION BY t.txn_id ORDER BY e.date ASC) AS rn
+    FROM txns t
+    INNER JOIN enquiries e
+        ON t.user_id = e.user_id
+        AND e.date BETWEEN t.date - INTERVAL 30 DAY AND t.date
+)
 
-| Column Name  | Data Type       | Description                                               |
-|--------------|------------------|-----------------------------------------------------------|
-| enquiry_id   | String           | Unique identifier for the enquiry                         |
-| date         | Date             | Date of the enquiry                                       |
-| user_id      | String           | Unique identifier for the user                            |
-| txn_ids      | Array(String)    | Array of transaction IDs linked to the enquiry            |
+We join `txns` and `enquiries` on `user_id`, and filter to only keep enquiries made within 30 days before the transaction date.  
+We use `ROW_NUMBER()` to rank these enquiries per transaction, so we can later select only the **first matching enquiry** for each transaction.
 
----
+**Step 2**  
 
-### Notes
+Get first enquiry per transaction
 
-- Enquiries with no matching transactions will have an **empty array** for `txn_ids`.
-- Output contains **one row per enquiry**.
-- Ensures strict compliance with the rule: one txn → one enquiry (first), but one enquiry → many txns.
+FirstEnquiries AS (
+    SELECT txn_id, enquiry_id
+    FROM FirstEnquiryPerTxn
+    WHERE rn = 1 )
+    
+From the ranked list, we keep only rows with `rn = 1`, i.e., the earliest enquiry linked to each transaction
 
+**Step 3**
+
+SELECT
+    e.enquiry_id,
+    e.date,
+    e.user_id,
+    groupArray(fe.txn_id) AS txn_ids
+FROM enquiries e
+LEFT JOIN FirstEnquiries fe ON e.enquiry_id = fe.enquiry_id
+GROUP BY e.enquiry_id, e.date, e.user_id
+ORDER BY e.enquiry_id;
+
+We join the filtered list of linked transaction IDs back with the original `enquiries` table.  
+For each enquiry, we collect all `txn_id`s where it was the first valid enquiry within 30 days before the transaction — using `groupArray()`.
+
+**Final Output**
+
+Each enquiry row will show:
+- enquiry_id  
+- date of enquiry  
+- user_id  
+- list of all transaction IDs it successfully converted (can be an empty array)
